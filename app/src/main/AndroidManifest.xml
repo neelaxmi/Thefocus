@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.tools.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Privacy by construction: NO INTERNET permission in the foundation build. Network features (rooms, sync) are
          separate opt-in modules added later and will declare their own permission. -->
