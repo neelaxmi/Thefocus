@@ -1,5 +1,4 @@
 package com.neelaxmi.focus.data
-
 import com.neelaxmi.focus.core.BreakRules
 import com.neelaxmi.focus.core.LogKind
 import com.neelaxmi.focus.core.Mode
