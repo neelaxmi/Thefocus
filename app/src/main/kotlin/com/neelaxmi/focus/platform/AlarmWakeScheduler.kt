@@ -28,7 +28,7 @@ class AlarmWakeScheduler(private val ctx: Context) : WakeScheduler {
         try {
             if (exact) am.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, at, pending())
             else am.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, at, pending())
-        } catch (e: SecurityException) {
+        } catch (e: SecurityException) {            // permission revoked between check and call
             Log.w(TAG, "exact alarm refused, using inexact", e)
             am.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, at, pending())
         }

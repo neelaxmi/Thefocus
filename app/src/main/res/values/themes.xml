@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Framework theme only (no AppCompat dependency). Compose draws everything; this just prevents a white flash. -->
     <style name="Theme.NeelaxmiFocus" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/ink</item>
         <item name="android:statusBarColor">@android:color/transparent</item>

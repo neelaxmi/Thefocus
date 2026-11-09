@@ -9,6 +9,7 @@ import com.neelaxmi.focus.core.SessionLog
 import com.neelaxmi.focus.core.SessionState
 import com.neelaxmi.focus.core.StrictRules
 import com.neelaxmi.focus.core.Tick
+import com.neelaxmi.focus.core.LogKind
 
 fun Session.toEntity() = SessionEntity(
     id = id, mode = mode.name, state = state.name, phase = phase.name, plannedMs = plannedMs,
@@ -21,6 +22,7 @@ fun Session.toEntity() = SessionEntity(
     endReqWall = endRequestedTick?.wallMs, endReqMono = endRequestedTick?.monoMs,
     clockAdjusted = clockAdjusted, rebootCount = rebootCount, tagId = tagId,
 )
+
 fun SessionEntity.toSession() = Session(
     id = id, mode = Mode.valueOf(mode), state = SessionState.valueOf(state), phase = Phase.valueOf(phase),
     plannedMs = plannedMs,
@@ -32,4 +34,5 @@ fun SessionEntity.toSession() = Session(
     endRequestedTick = if (endReqWall != null && endReqMono != null) Tick(endReqWall, endReqMono) else null,
     clockAdjusted = clockAdjusted, rebootCount = rebootCount, tagId = tagId,
 )
+
 fun SessionLog.toEntity(sessionId: Long) = SessionLogEntity(sessionId = sessionId, atWall = atWallMs, kind = kind.name, phase = phase?.name)

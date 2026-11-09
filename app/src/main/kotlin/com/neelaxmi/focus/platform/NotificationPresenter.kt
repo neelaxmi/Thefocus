@@ -16,6 +16,7 @@ import com.neelaxmi.focus.core.Session
 import com.neelaxmi.focus.core.SessionMachine
 import com.neelaxmi.focus.core.SessionPresenter
 import com.neelaxmi.focus.core.SessionState
+import com.neelaxmi.focus.core.TimeFormat
 
 object Notifications {
     const val CH_ONGOING = "focus_ongoing"
@@ -35,18 +36,20 @@ object Notifications {
 }
 
 /** Android implementation of [SessionPresenter]: a foreground-service notification plus phase alerts. */
-class NotificationPresenter(private val ctx: Context) : SessionPresenter {
+class NotificationPresenter(private val ctx: Context, private val todayFocusMin: () -> Int = { -1 }) : SessionPresenter {
     private val nm = ctx.service<NotificationManager>()
 
     override fun ongoing(session: Session) {
         if (FocusService.running) {
-            nm.notify(Notifications.ID_ONGOING, buildOngoing(ctx, session))
+            nm.notify(Notifications.ID_ONGOING, buildOngoing(ctx, session, todayFocusMin()))     // updates the foreground notification in place
         } else {
             try {
                 ctx.startForegroundService(Intent(ctx, FocusService::class.java).setAction(FocusService.ACTION_START))
             } catch (e: Exception) {
+                // e.g. ForegroundServiceStartNotAllowedException while in a restricted background state.
+                // The alarm + persisted state still guarantee correctness; we just lose the persistent notification.
                 Log.w(TAG, "cannot start foreground service now: ${e.javaClass.simpleName}", e)
-                nm.notify(Notifications.ID_ONGOING, buildOngoing(ctx, session))
+                nm.notify(Notifications.ID_ONGOING, buildOngoing(ctx, session, todayFocusMin()))
             }
         }
     }
@@ -80,13 +83,17 @@ class NotificationPresenter(private val ctx: Context) : SessionPresenter {
         private fun actionIntent(ctx: Context, action: String, code: Int): PendingIntent = PendingIntent.getBroadcast(
             ctx, code, Intent(ctx, ActionReceiver::class.java).setAction(action), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
+        /** Minimal notification used to satisfy the "call startForeground within seconds" rule before state is loaded. */
         fun placeholder(ctx: Context): Notification = Notification.Builder(ctx, Notifications.CH_ONGOING)
             .setSmallIcon(R.drawable.ic_stat_focus).setContentTitle(ctx.getString(R.string.notif_placeholder))
             .setOngoing(true).setContentIntent(openApp(ctx)).build()
 
-        fun buildOngoing(ctx: Context, session: Session): Notification {
+        /**
+         * The system draws the countdown itself (chronometer), so we do NOT wake the app every second to update it.
+         */
+        fun buildOngoing(ctx: Context, session: Session, todayFocusMin: Int = -1): Notification {
             val now = SystemTicks.now()
-            val s = SessionMachine.advance(session, now).session
+            val s = SessionMachine.advance(session, now).session          // read-only projection
             val remaining = SessionMachine.remainingMs(s)
             val b = Notification.Builder(ctx, Notifications.CH_ONGOING)
                 .setSmallIcon(R.drawable.ic_stat_focus)
@@ -107,17 +114,18 @@ class NotificationPresenter(private val ctx: Context) : SessionPresenter {
                 Mode.STOPWATCH -> ctx.getString(R.string.notif_text_stopwatch)
                 Mode.POMODORO -> ctx.getString(R.string.notif_text_pomodoro, s.round, s.pomodoro!!.roundsPerCycle)
             }
+            if (todayFocusMin >= 0) b.setSubText(ctx.getString(R.string.notif_today, TimeFormat.minutes(todayFocusMin)))
             b.setContentText(if (s.strict != null) "$detail · " + ctx.getString(R.string.notif_text_strict) else detail)
 
             if (!paused) {
                 b.setShowWhen(true).setUsesChronometer(true)
                 if (remaining != null) b.setChronometerCountDown(true).setWhen(System.currentTimeMillis() + remaining)
-                else b.setWhen(System.currentTimeMillis() - s.focusTotalMs)
+                else b.setWhen(System.currentTimeMillis() - s.focusTotalMs)            // stopwatch counts up
             } else {
                 b.setShowWhen(false)
             }
 
-            if (s.strict == null) {
+            if (s.strict == null) {                                       // strict sessions expose no controls
                 if (paused) b.addAction(Notification.Action.Builder(null, ctx.getString(R.string.action_resume), actionIntent(ctx, ActionReceiver.ACTION_RESUME, 1)).build())
                 else if (s.phase == Phase.FOCUS) b.addAction(Notification.Action.Builder(null, ctx.getString(R.string.action_pause), actionIntent(ctx, ActionReceiver.ACTION_PAUSE, 2)).build())
                 else if (s.phase == Phase.USER_BREAK) b.addAction(Notification.Action.Builder(null, ctx.getString(R.string.action_skip_break), actionIntent(ctx, ActionReceiver.ACTION_SKIP_BREAK, 3)).build())

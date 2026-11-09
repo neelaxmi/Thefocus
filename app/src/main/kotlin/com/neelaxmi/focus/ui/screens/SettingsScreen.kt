@@ -1,5 +1,7 @@
 package com.neelaxmi.focus.ui.screens
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,7 +32,7 @@ import com.neelaxmi.focus.platform.Settings
 import com.neelaxmi.focus.ui.Panel
 
 @Composable
-fun SettingsScreen(settings: Settings, resumeKey: Int, onGoalChanged: () -> Unit, requestNotifications: () -> Unit) {
+fun SettingsScreen(settings: Settings, resumeKey: Int, onGoalChanged: () -> Unit, requestNotifications: () -> Unit, onOpenUsageAccess: () -> Unit, onEnableBlocking: () -> Unit) {
     val ctx = LocalContext.current
     Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp, 28.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium)
@@ -67,17 +69,31 @@ fun SettingsScreen(settings: Settings, resumeKey: Int, onGoalChanged: () -> Unit
         }
 
         Panel {
+            Text(stringResource(R.string.set_schedules), style = MaterialTheme.typography.titleMedium)
+            Stepper(stringResource(R.string.set_reminder_lead), settings.reminderLeadMin, 5, 0..60) { settings.reminderLeadMin = it }
+            Text(stringResource(R.string.set_reminder_lead_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+        }
+
+        Panel {
             Text(stringResource(R.string.rel_title), style = MaterialTheme.typography.titleMedium)
             Text(stringResource(R.string.rel_desc), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
+            // resumeKey changes every time the user returns from system settings, so statuses below are re-read.
             key(resumeKey) {
                 PermRow(R.string.rel_notifications, PermissionHelper.notificationsGranted(ctx)) {
                     if (PermissionHelper.needsNotificationRuntimePermission()) requestNotifications() else ctx.startActivity(PermissionHelper.notificationSettings(ctx))
                 }
                 PermRow(R.string.rel_exact_alarms, PermissionHelper.exactAlarmsAllowed(ctx)) { ctx.startActivity(PermissionHelper.exactAlarmSettings(ctx)) }
                 PermRow(R.string.rel_battery, PermissionHelper.batteryUnrestricted(ctx)) { ctx.startActivity(PermissionHelper.batterySettings()) }
+                PermRow(R.string.rel_accessibility, PermissionHelper.blockingAvailable(ctx)) { onEnableBlocking() }
+                PermRow(R.string.rel_usage_access, PermissionHelper.usageAccessGranted(ctx)) { onOpenUsageAccess() }
             }
             TextButton(onClick = { ctx.startActivity(PermissionHelper.appDetails(ctx)) }) { Text(stringResource(R.string.rel_app_info)) }
             Text(stringResource(R.string.rel_oem_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+
+        Panel {
+            Text(stringResource(R.string.limits_title), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary)
+            Text(stringResource(R.string.limits_text), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
         }
 
         Panel {

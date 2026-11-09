@@ -11,6 +11,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
+/** NEELAXMI palette: deep ink, aurora teal (progress), warm amber (reward), soft violet (secondary data). Original. */
 object Palette {
     val Ink = Color(0xFF0B1020); val Panel = Color(0xFF121933); val PanelHigh = Color(0xFF1B2547)
     val Aurora = Color(0xFF3DDBC0); val Amber = Color(0xFFFFB84D); val Violet = Color(0xFF8B7CFF)
@@ -29,6 +30,7 @@ private val Light = lightColorScheme(
     surfaceVariant = Color(0xFFE6EAFB), onSurfaceVariant = Color(0xFF4A557D), error = Color(0xFFC62840), outline = Color(0xFFB5BEDF),
 )
 
+/** Tabular figures so the countdown does not jitter as digits change. */
 val TimerStyle = TextStyle(fontSize = 64.sp, fontWeight = FontWeight.Bold, letterSpacing = (-1.5).sp, fontFeatureSettings = "tnum")
 
 private val Type = Typography(

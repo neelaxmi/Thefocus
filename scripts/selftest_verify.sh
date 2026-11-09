@@ -72,6 +72,18 @@ printf '#!/bin/sh\nexit 0\n' > "$T/fake/kotlinc/bin/kotlinc"
 fresh_copy "$T/h"
 expect_fail "H: compiler exits 0 but produces no classes" "NO CLASS FILES" env KOTLINC="$T/fake/kotlinc/bin/kotlinc" bash "$T/h/scripts/test-core.sh"
 
+fresh_copy "$T/i"   # I. a migration that does not match the entities (wrong column type)
+sed -i 's/`totalMs` INTEGER NOT NULL, `unlocks`/`totalMs` TEXT NOT NULL, `unlocks`/' "$T/i/app/src/main/kotlin/com/neelaxmi/focus/data/Migrations.kt"
+expect_fail "I: migration/entity mismatch fails check_room_v2" "MIGRATION MISMATCH" python3 "$T/i/scripts/check_room_v2.py"
+
+fresh_copy "$T/j"   # J. an entity that is not registered in @Database (would silently have no table)
+sed -i 's/AchievementEntity::class, //' "$T/j/app/src/main/kotlin/com/neelaxmi/focus/data/FocusDatabase.kt"
+expect_fail "J: entity missing from @Database fails check_room_v2" "not registered" python3 "$T/j/scripts/check_room_v2.py"
+
+fresh_copy "$T/k"   # K. an unescaped double quote in a string resource (aapt2 would silently strip it)
+sed -i 's|<string name="app_name">NEELAXMI Focus</string>|<string name="app_name">NEELAXMI "Focus"</string>|' "$T/k/app/src/main/res/values/strings.xml"
+expect_fail "K: bad string resource fails verify_offline" "unescaped double quote" bash "$T/k/scripts/verify_offline.sh"
+
 echo
 echo "self-test: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

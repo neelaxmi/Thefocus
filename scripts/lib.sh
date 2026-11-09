@@ -9,7 +9,7 @@ STDLIB="$KOTLIN_HOME/lib/kotlin-stdlib.jar"
 [ -f "$STDLIB" ] || { echo "ERROR: kotlin-stdlib.jar not found at $STDLIB" >&2; exit 2; }
 
 # Minimum number of engine checks that must run. Guards against a test file silently dropping out of the build.
-MIN_ENGINE_CHECKS=64
+MIN_ENGINE_CHECKS=119
 
 # Engine test sources WITHOUT the Gradle/JUnit wrapper (EngineSuiteTest.kt needs JUnit, which the offline
 # scripts deliberately do not require). Single definition so every script uses the same list.

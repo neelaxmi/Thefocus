@@ -1,10 +1,12 @@
 package com.neelaxmi.focus.core
 
+/** Dependency-free mini test harness so the engine can be verified with only a Kotlin compiler. */
 object Harness {
     var passed = 0
     fun reset() { passed = 0; failures.clear() }
     val failures = mutableListOf<String>()
     private var current = ""
+
     fun test(name: String, body: () -> Unit) {
         current = name
         try { body(); passed++ } catch (t: Throwable) { failures += "FAIL  $name: ${t.message ?: t}" }

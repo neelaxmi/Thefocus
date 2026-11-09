@@ -34,6 +34,7 @@ class FocusService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Must happen immediately: the system kills apps that start a foreground service and do not promote it in time.
         try {
             val n = NotificationPresenter.placeholder(this)
             if (Build.VERSION.SDK_INT >= 34) startForeground(Notifications.ID_ONGOING, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
@@ -42,6 +43,7 @@ class FocusService : Service() {
             Log.w(TAG, "startForeground refused: ${e.javaClass.simpleName}", e)
             stopSelf(); return START_NOT_STICKY
         }
+        // Rebuild + re-arm from storage (covers: first start, sticky restart after kill with a null intent).
         loc.io.execute { loc.controller.sync() }
         return START_STICKY
     }
